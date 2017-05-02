@@ -52,7 +52,8 @@ ifeq ($(FLAVOR),release)
 endif
 
 COMPONENTS_eagle.app.v6 = \
-	src/libuser.a  
+	src/libuser.a \
+	driver/src/libdriver.a 
 
 LINKFLAGS_eagle.app.v6 = \
 	-L$(SDK_PATH)/lib        \
