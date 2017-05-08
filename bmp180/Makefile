@@ -12,7 +12,7 @@
 #     a generated lib/image xxx.a ()
 #
 ifndef PDIR
-GEN_LIBS = libuser.a
+GEN_LIBS = libdriver_bmp180.a
 endif
 
 
@@ -36,7 +36,8 @@ endif
 #
 # Required for each makefile to inherit from the parent
 #
-INCLUDES += -I ./include
+INCLUDES := $(INCLUDES) -I $(PDIR)include
+INCLUDES += -I .
 PDIR := ../$(PDIR)
 
 sinclude $(PDIR)Makefile

@@ -1,8 +1,9 @@
 #ifndef __I2C_MASTER_H__
 #define __I2C_MASTER_H__
 
-#include "esp8266/pin_mux_register.h"
-#include "gpio.h"
+#include <esp_common.h>
+#include <gpio.h>
+
 #define I2C_MASTER_SDA_MUX PERIPHS_IO_MUX_GPIO2_U
 #define I2C_MASTER_SCL_MUX PERIPHS_IO_MUX_MTMS_U
 #define I2C_MASTER_SDA_GPIO 2

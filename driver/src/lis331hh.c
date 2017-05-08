@@ -9,35 +9,7 @@
 
 #include "lis331hh.h"
 #include "logger.h"
-
-#define RW_ADDR(ADDR, TYPE) (((ADDR) << 1)  | ((TYPE == Read) ? 0x01 : 0x00))
-
-LOCAL bool lis331_write_preamble(uint8 sub)
-{
-	// Write SAD + W
-	i2c_master_start();
-	const uint8 addr = RW_ADDR(LIS331_ADDR, Write);
-	i2c_master_writeByte(addr);
-
-	if (!i2c_master_checkAck())
-	{
-		log_error("missing slave ack (SAD+W)");
-		i2c_master_stop();
-		return false;
-	}
-
-	// Write SUB
-	i2c_master_writeByte(sub);
-
-	if (!i2c_master_checkAck())
-	{
-		log_error("missing slave ack (SUB)");
-		i2c_master_stop();
-		return false;
-	}
-
-	return true;
-}
+#include <i2c_common.h>
 
 bool lis331_write_register(uint8 reg, uint8 value)
 {
@@ -47,7 +19,7 @@ bool lis331_write_register(uint8 reg, uint8 value)
 		return false;
 	}
 
-	const bool success = lis331_write_preamble(reg);
+	const bool success = i2c_preamble_write(LIS331_ADDR, reg);
 	if (!success)
 	{
 		return false;
@@ -69,7 +41,7 @@ bool lis331_write_register(uint8 reg, uint8 value)
 
 bool lis331_read_status(uint8 * status)
 {
-	const bool success = lis331_write_preamble((~SUB_AUTO_INC) & STATUS_REG);
+	const bool success = i2c_preamble_write(LIS331_ADDR, ((~SUB_AUTO_INC) & STATUS_REG));
 
 	if (!success)
 	{
@@ -97,7 +69,7 @@ bool lis331_read_status(uint8 * status)
 
 bool lis331_read_data(struct AccelData* data)
 {
-	const bool success = lis331_write_preamble(SUB_AUTO_INC | OUT_X_L);
+	const bool success = i2c_preamble_write(LIS331_ADDR, (SUB_AUTO_INC | OUT_X_L));
 
 	if (!success)
 	{

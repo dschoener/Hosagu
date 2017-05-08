@@ -11,13 +11,9 @@
 #include <esp_common.h>
 #include <i2c_master.h>
 
-#define LIS331_ADDR 0x18
+#include "i2c_common.h"
 
-enum DataType
-{
-	Write = 0,
-	Read = 1
-};
+#define LIS331_ADDR 0x18
 
 /**
  * Contains the acceleration data

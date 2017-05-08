@@ -17,11 +17,9 @@ FLAVOR = debug
 
 export PATH := $(PWD)/../esp-open-sdk/xtensa-lx106-elf/bin:$(PATH)
 export SDK_PATH := $(PWD)/../ESP8266_RTOS_SDK
+#PDIR := $(PWD)
 BIN_PATH := $(PWD)/bin
 TTY_DEV ?= /dev/ttyUSB0
-
-INCLUDES += -I ./include \
-            -I ./driver/include
 
 #EXTRA_CCFLAGS += -u
 
@@ -29,7 +27,9 @@ ifndef PDIR # {
 GEN_IMAGES= eagle.app.v6.out
 GEN_BINS= eagle.app.v6.bin
 SPECIAL_MKTARGETS=$(APP_MKTARGETS)
-SUBDIRS= src driver/src 
+SUBDIRS= src \
+         driver/src \
+         bmp180
 
 endif # } PDIR
 
@@ -52,9 +52,10 @@ ifeq ($(FLAVOR),release)
 endif
 
 COMPONENTS_eagle.app.v6 = \
+	driver/src/libdriver.a \
+	bmp180/libdriver_bmp180.a \
 	src/libuser.a \
-	driver/src/libdriver.a 
-
+	
 LINKFLAGS_eagle.app.v6 = \
 	-L$(SDK_PATH)/lib        \
 	-Wl,--gc-sections   \
@@ -134,6 +135,9 @@ DDEFINES +=				\
 #
 
 INCLUDES := $(INCLUDES) -I $(PDIR)include 
+INCLUDES += -I $(PDIR)bmp180 
+INCLUDES += -I $(PDIR)driver/include 
+
 sinclude $(SDK_PATH)/Makefile
 
 .PHONY: FORCE flash
