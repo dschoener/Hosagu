@@ -27,9 +27,13 @@ ifndef PDIR # {
 GEN_IMAGES= eagle.app.v6.out
 GEN_BINS= eagle.app.v6.bin
 SPECIAL_MKTARGETS=$(APP_MKTARGETS)
-SUBDIRS= src \
-         driver/src \
-         bmp180
+SUBDIRS= user \
+		 utils \
+         driver \
+         bmp180 \
+         lis331hh \
+         ms100 \
+         wifi
 
 endif # } PDIR
 
@@ -52,9 +56,12 @@ ifeq ($(FLAVOR),release)
 endif
 
 COMPONENTS_eagle.app.v6 = \
-	driver/src/libdriver.a \
-	bmp180/libdriver_bmp180.a \
-	src/libuser.a \
+	user/libuser.a \
+	driver/libdriver.a \
+	bmp180/libbmp180.a \
+	lis331hh/liblis331hh.a \
+	ms100/libms100.a \
+	wifi/libwifi.a
 	
 LINKFLAGS_eagle.app.v6 = \
 	-L$(SDK_PATH)/lib        \
@@ -88,7 +95,6 @@ LINKFLAGS_eagle.app.v6 = \
 	-lspiffs	\
 	-lwpa	\
 	-lwps		\
-    -ldriver \
 	$(DEP_LIBS_eagle.app.v6)					\
 	-Wl,--end-group
 
@@ -134,9 +140,7 @@ DDEFINES +=				\
 # Required for each makefile to inherit from the parent
 #
 
-INCLUDES := $(INCLUDES) -I $(PDIR)include 
-INCLUDES += -I $(PDIR)bmp180 
-INCLUDES += -I $(PDIR)driver/include 
+INCLUDES := $(INCLUDES) -I $(PDIR).
 
 sinclude $(SDK_PATH)/Makefile
 

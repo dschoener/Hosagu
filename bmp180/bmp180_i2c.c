@@ -52,16 +52,16 @@
 /*---------------------------------------------------------------------------*/
 /* Includes*/
 /*---------------------------------------------------------------------------*/
+#include "bmp180_i2c.h"
 #include "bmp180.h"
-#include <i2c_master.h>
-#include <i2c_common.h>
-#include <logger.h>
+#include <driver/i2c_master.h>
+#include <driver/i2c_common.h>
+#include <utils/logger.h>
 
 /*----------------------------------------------------------------------------
  * The following functions are used for reading and writing of
  * sensor data using I2C or SPI communication
  ----------------------------------------------------------------------------*/
-#ifdef BMP180_API
 /*	\Brief: The function is used as I2C bus read
  *	\Return : Status of the I2C read
  *	\param dev_addr : The device address of the sensor
@@ -83,17 +83,12 @@ s8 BMP180_I2C_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt);
  * \Brief: I2C init routine
  */
 s8 I2C_routine(void);
-#endif
 /********************End of I2C function declarations***********************/
 /*	Brief : The delay routine
  *	\param : delay in ms
  */
 void BMP180_delay_msek(u32 msek);
-/* This function is an example for reading sensor data
- *	\param: None
- *	\return: communication result
- */
-s32 bmp180_data_readout_template(void);
+
 /*----------------------------------------------------------------------------
  struct bmp180_t parameters can be accessed by using bmp180
  *	bmp180_t having the following parameters
@@ -105,22 +100,19 @@ s32 bmp180_data_readout_template(void);
  *	Calibration parameters
  ---------------------------------------------------------------------------*/
 struct bmp180_t bmp180;
+
+static s8 i2c_process_status = 0;
 /*----------------------------------------------------------------------------*/
 /* This function is an example for reading sensor data
  *	\param: None
  *	\return: communication result
  */
-s32 bmp180_data_readout_template(void)
+uint8 bmp180_data_readout(struct Bmp180Data* result)
 {
-	/* result of communication results*/
-	s32 com_rslt = E_BMP_COMM_RES;
-	u16 v_uncomp_temp_u16 = BMP180_INIT_VALUE;
-	u32 v_uncomp_press_u32 = BMP180_INIT_VALUE;
 	/*********************** START INITIALIZATION ************************/
 	/**************Call the I2C init routine ***************/
-#ifdef BMP180_API
 	I2C_routine();
-#endif
+
 	/*--------------------------------------------------------------------------
 	 *  This function used to assign the value/reference of
 	 *	the following parameters
@@ -130,7 +122,12 @@ s32 bmp180_data_readout_template(void)
 	 *	Chip id
 	 *	Calibration values
 	 -------------------------------------------------------------------------*/
-	com_rslt = bmp180_init(&bmp180);
+	if (bmp180_init(&bmp180) != 0)
+	{
+		log_error("failed to init bmp180");
+		return E_BMP_COMM_RES;
+	}
+
 	// START CALIPRATION
 	/*  This function used to read the calibration values of following
 	 *	these values are used to calculate the true pressure and temperature
@@ -146,26 +143,30 @@ s32 bmp180_data_readout_template(void)
 	 *		MB			0xBA	0xBB	0 to 7
 	 *		MC			0xBC	0xBD	0 to 7
 	 *		MD			0xBE	0xBF	0 to 7*/
-	com_rslt += bmp180_get_calib_param();
+	if (bmp180_get_calib_param() != 0)
+	{
+		log_error("failed to calibrate parameters");
+		return E_BMP_COMM_RES;
+	}
 
 	// START READ UNCOMPENSATED TEMPERATURE AND PRESSURE
-	v_uncomp_temp_u16 = bmp180_get_uncomp_temperature();
-	v_uncomp_press_u32 = bmp180_get_uncomp_pressure();
+	const u16 v_uncomp_temp_u16 = bmp180_get_uncomp_temperature();
+	const u32 v_uncomp_press_u32 = bmp180_get_uncomp_pressure();
 
 	// START READ TRUE TEMPERATURE AND PRESSURE
-	com_rslt += bmp180_get_temperature(v_uncomp_temp_u16);
-	com_rslt += bmp180_get_pressure(v_uncomp_press_u32);
+	result->temperature = bmp180_get_temperature(v_uncomp_temp_u16);
+	result->pressure = bmp180_get_pressure(v_uncomp_press_u32);
 
-	return com_rslt;
+	return i2c_process_status;
 }
 
-#ifdef BMP180_API
 /*--------------------------------------------------------------------------*
  *	The following function is used to map the I2C bus read, write, delay and
  *	device address with global structure bmp180_t
  *-------------------------------------------------------------------------*/
 s8 I2C_routine(void)
 {
+	i2c_process_status = BMP180_INIT_VALUE;
 	/*--------------------------------------------------------------------------*
 	 *  By using bmp180 the following structure parameter can be accessed
 	 *	Bus write function pointer: BMP180_WR_FUNC_PTR
@@ -202,10 +203,10 @@ s8 BMP180_I2C_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
 {
 	for (; cnt > 0; cnt--)
 	{
-		const bool success = i2c_preamble_write(dev_addr, reg);
+		const bool success = i2c_preamble_write(dev_addr, reg_addr);
 		if (!success)
 		{
-			return E_BMP_COMM_RES;;
+			return (i2c_process_status = E_BMP_COMM_RES);
 		}
 
 		// Write DATA
@@ -215,13 +216,13 @@ s8 BMP180_I2C_bus_write(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
 		{
 			log_error("missing slave ack (DATA)");
 			i2c_master_stop();
-			return E_BMP_COMM_RES;;
+			return (i2c_process_status = E_BMP_COMM_RES);
 		}
 
 		reg_data++;
 		i2c_master_stop();
 	}
-	return (s8)BMP180_INIT_VALUE;
+	return (i2c_process_status = BMP180_INIT_VALUE);
 }
 
 /*	\Brief: The function is used as I2C bus read
@@ -236,7 +237,7 @@ s8 BMP180_I2C_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
 	const bool success = i2c_preamble_write(dev_addr, reg_addr);
 	if (!success)
 	{
-		return E_BMP_COMM_RES;
+		return (i2c_process_status = E_BMP_COMM_RES);
 	}
 
 	// Start reading
@@ -248,7 +249,7 @@ s8 BMP180_I2C_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
 	{
 		log_error("missing slave ack (SAD+R)");
 		i2c_master_stop();
-		return E_BMP_COMM_RES;
+		return (i2c_process_status = E_BMP_COMM_RES);
 	}
 
 	// Read data sequence
@@ -268,7 +269,7 @@ s8 BMP180_I2C_bus_read(u8 dev_addr, u8 reg_addr, u8 *reg_data, u8 cnt)
 	}
 
 	i2c_master_stop();
-	return (s8)BMP180_INIT_VALUE;
+	return (i2c_process_status = BMP180_INIT_VALUE);
 }
 /*	Brief : The delay routine
  *	\param : delay in ms
@@ -277,5 +278,3 @@ void BMP180_delay_msek(u32 msek)
 {
 	i2c_master_wait(1000 * msek);
 }
-
-#endif

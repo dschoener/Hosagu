@@ -8,7 +8,8 @@
 //////////////////////////////////////////////////////////////////////////
 
 #include <i2c_common.h>
-#include <logger.h>
+
+#include <utils/logger.h>
 
 bool i2c_preamble_write(uint8 addr, uint8 reg)
 {

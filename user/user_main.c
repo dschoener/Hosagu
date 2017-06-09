@@ -10,8 +10,12 @@
 #include <esp_common.h>
 #include <gpio.h>
 #include <uart.h>
-#include "lis331hh.h"
-#include "logger.h"
+
+#include <ms100/ms100.h>
+#include "lis331hh/lis331hh.h"
+#include "bmp180/bmp180_i2c.h"
+#include "utils/logger.h"
+#include "wifi/wifi_control.h"
 
 static os_timer_t timer;
 
@@ -87,6 +91,17 @@ LOCAL void ICACHE_FLASH_ATTR on_trigger_received()
 		last_time_ms = now_ms;
 	}
 
+	struct Bmp180Data bmp180Data = { 0, 0 };
+	if (bmp180_data_readout(&bmp180Data) == 0)
+	{
+		log_info("BMP180: %04d.0 Pa", bmp180Data.pressure);
+		log_info("BMP180: %04d.%01d° C", (bmp180Data.temperature / 10), (bmp180Data.temperature % 10));
+	}
+
+	const uint32 mili_volt = ((((uint32)system_adc_read()) * 1000) / 1024);
+
+	log_info("ADC: %01d.%03d V", (mili_volt / 1000), (mili_volt % 1000));
+
 	uint8 status = 0;
 	bool success = lis331_read_status(&status);
 
@@ -134,6 +149,7 @@ void user_init(void)
 		log_error("failed to init device LIS331HH");
 	}
 
+	wifi_control_init();
 	os_timer_setfn(&timer, (os_timer_func_t*) on_trigger_received, NULL);
-	os_timer_arm(&timer, 20, 1);
+	os_timer_arm(&timer, 200, 1);
 }

@@ -12,7 +12,7 @@
 #     a generated lib/image xxx.a ()
 #
 ifndef PDIR
-GEN_LIBS = libdriver.a
+GEN_LIBS = libwifi.a
 endif
 
 
@@ -36,8 +36,8 @@ endif
 #
 # Required for each makefile to inherit from the parent
 #
-INCLUDES := $(INCLUDES) -I $(PDIR)include
-PDIR := ../../$(PDIR)
+INCLUDES := $(INCLUDES) -I $(PDIR).
+PDIR := ../$(PDIR)
 
 sinclude $(PDIR)Makefile
 

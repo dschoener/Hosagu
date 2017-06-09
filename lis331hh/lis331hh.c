@@ -8,8 +8,9 @@
 //////////////////////////////////////////////////////////////////////////
 
 #include "lis331hh.h"
-#include "logger.h"
-#include <i2c_common.h>
+
+#include <driver/i2c_common.h>
+#include <utils/logger.h>
 
 bool lis331_write_register(uint8 reg, uint8 value)
 {

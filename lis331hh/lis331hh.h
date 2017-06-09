@@ -11,7 +11,7 @@
 #include <esp_common.h>
 #include <i2c_master.h>
 
-#include "i2c_common.h"
+#include <driver/i2c_common.h>
 
 #define LIS331_ADDR 0x18
 

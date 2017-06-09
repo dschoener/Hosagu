@@ -12,7 +12,7 @@
 #     a generated lib/image xxx.a ()
 #
 ifndef PDIR
-GEN_LIBS = libuser.a
+GEN_LIBS = liblis331hh.a
 endif
 
 
@@ -36,8 +36,7 @@ endif
 #
 # Required for each makefile to inherit from the parent
 #
-INCLUDES := $(INCLUDES) -I $(PDIR)include
-INCLUDES += -I ./
+INCLUDES := $(INCLUDES) -I $(PDIR).
 PDIR := ../$(PDIR)
 
 sinclude $(PDIR)Makefile
